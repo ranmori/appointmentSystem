@@ -46,11 +46,12 @@ app.use(
 );
 // handle preflight
 app.options("*", cors());
-app.use(express.json({ limit: "50mb" }));
+
 
 // Different limits for different routes
 app.use("/api/appointments", express.json({ limit: "1mb" }));
 app.use("/api/users/me", express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "50mb" }));
 // ports
 const PORT = process.env.PORT || 3022;
 const MongoDB = process.env.MongoDB;
@@ -83,8 +84,7 @@ const strictLimiter = rateLimit({
   skipSuccessfulRequests: true,
 });
 
-app.use("/api/login", strictLimiter);
-
+app.use("/auth/login", strictLimiter);
 // api routes
 // Register
 app.post("/auth/register", limiter, async (req, res) => {
@@ -228,10 +228,9 @@ app.post("/auth/login", limiter, async (req, res) => {
 
     const user = await User.findOne({ username });
     if (!user || !bcrypt.compare(password, user.password)) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: "Invalid username or password" });
-    }
-
-    // --- FIX: Ensure `role` is in JWT payload for login ---
+    }    // --- FIX: Ensure `role` is in JWT payload for login ---
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
