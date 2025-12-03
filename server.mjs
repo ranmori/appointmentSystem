@@ -12,58 +12,63 @@ import Dr from "./Backend/models/Dr.mjs";
 import Appointment from "./Backend/models/Appointment.mjs";
 
 dotenv.config();
+// validate missing enviornmental variables
+const requiredEnvVars = [
+  "PORT",
+  "MongoDB",
+  "JWT_SECRET",
+  "CLIENT_URL",
+  "NODE_ENV",
+];
+const missingEnvVars = requiredEnvVars.filter(
+  (varName) => !process.env[varName]
+);
+
+if (missingEnvVars.length > 0) {
+  console.error(
+    `Missing required environment variables: ${missingEnvVars.join(", ")}`
+  );
+  process.exit(1);
+}
+
+if (process.env.JWT_SECRET.length < 32) {
+  console.error("JWT_SECRET must be at least 32 characters long");
+  process.exit(1);
+}
 const app = express();
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
-    methods: ["GET", "POST", "PATCH"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
+// handle preflight
+app.options("*", cors());
 app.use(express.json({ limit: "50mb" }));
 
+// Different limits for different routes
+app.use("/api/appointments", express.json({ limit: "1mb" }));
+app.use("/api/users/me", express.json({ limit: "10mb" }));
 // ports
 const PORT = process.env.PORT || 3022;
 const MongoDB = process.env.MongoDB;
 
-// mongo db schema
-// const userSchema = new mongoose.Schema({
-//   username: { type: String, required: true, unique: true },
-//   email: { type: String, required: true },
-//   password: { type: String },
-//   role: { type: String, required: true, enum: ["patient", "doctor", "admin"] },
-// });
-// const drSchema = new mongoose.Schema({
-//   user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-//   specialization: String,
-//   availability: [
-//     {
-//       date: Date,
-//       slots: [String],
-//     },
-//   ],
-//   image: String, // Add image field
-// });
-// const appointSchema = new mongoose.Schema({
-//   dr_id: { type: mongoose.Schema.Types.ObjectId, ref: "Dr" },
-//   patient_Id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-//   date: Date,
-//   time: String,
-//   duration: Number,
-//   status: { type: String, enum: ["pending", "booked", "cancelled"] },
-//   notes: String,
-// });
-
-// const User = mongoose.model("User", userSchema);
-// const Dr = mongoose.model("Dr", drSchema);
-// const Appointment = mongoose.model("Appointment", appointSchema);
-
-// apply the rate limiter
-
 // connect to mongodb
 mongoose
-  .connect(MongoDB)
+  .connect(MongoDB, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  })
   .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .catch((err) => {
+    console.error("MongoDB connection error:", err);
+    process.exit(1); // Exit if can't connect to database
+  });
 
 // add a rate limiter
 const limiter = rateLimit({
@@ -71,6 +76,14 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   message: "Too many requests, please try again later.",
 });
+
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5, // Only 5 login attempts per 15 minutes
+  skipSuccessfulRequests: true,
+});
+
+app.use("/api/login", strictLimiter);
 
 // api routes
 // Register
@@ -120,7 +133,9 @@ app.post("/auth/register", limiter, async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Use 12-14 rounds minimum
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
     console.log("Password hashed.");
 
     const newUser = new User({
@@ -160,12 +175,13 @@ app.post("/auth/register", limiter, async (req, res) => {
       );
     }
 
-    // --- FIX: Ensure `role` is in JWT payload ---
+    // Implement refresh tokens
     const token = jwt.sign(
-      { userId: newUser._id, role: newUser.role }, // Include role here explicitly
+      { userId: newUser._id, role: newUser.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "24h" }
     );
+
     console.log(
       "JWT token generated for user:",
       newUser._id,
@@ -211,8 +227,8 @@ app.post("/auth/login", limiter, async (req, res) => {
     }
 
     const user = await User.findOne({ username });
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+    if (!user || !bcrypt.compare(password, user.password)) {
+      return res.status(401).json({ message: "Invalid username or password" });
     }
 
     // --- FIX: Ensure `role` is in JWT payload for login ---
@@ -305,7 +321,24 @@ app.post("/api/appointments", authenticate, async (req, res) => {
     }
 
     const appointmentDate = new Date(date);
+    const now = new Date();
     const requestedDateISO = appointmentDate.toISOString().split("T")[0];
+
+    // Validate date is not in the past
+    if (appointmentDate < now.setHours(0, 0, 0, 0)) {
+      return res
+        .status(400)
+        .json({ error: "Cannot book appointments in the past" });
+    }
+
+    // Validate date is not too far in the future (e.g., 6 months)
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 6);
+    if (appointmentDate > maxDate) {
+      return res.status(400).json({
+        error: "Cannot book appointments more than 6 months in advance",
+      });
+    }
 
     const isAvailable = doctor.availability.some((slot) => {
       const slotDateISO = new Date(slot.date).toISOString().split("T")[0];
@@ -355,77 +388,6 @@ app.post("/api/appointments", authenticate, async (req, res) => {
   }
 });
 // get appointments
-app.post("/api/appointments", authenticate, async (req, res) => {
-  try {
-    const { doctorId, date, time, notes, symptoms, signs } = req.body;
-    if (!doctorId || !date || !time) {
-      return res
-        .status(400)
-        .json({ error: "Missing required fields: doctorId, date, time" });
-    }
-
-    if (req.user.role !== "patient") {
-      return res
-        .status(403)
-        .json({ error: "Only patients can book appointments." });
-    }
-
-    const doctor = await Dr.findOne({ user_id: doctorId });
-    if (!doctor) {
-      console.log(`Doctor profile not found for user_id: ${doctorId}`);
-      return res.status(404).json({ error: "Doctor not found." });
-    }
-
-    const appointmentDate = new Date(date);
-    const requestedDateISO = appointmentDate.toISOString().split("T")[0];
-
-    const isAvailable = doctor.availability.some((slot) => {
-      const slotDateISO = new Date(slot.date).toISOString().split("T")[0];
-      return slotDateISO === requestedDateISO && slot.slots.includes(time);
-    });
-
-    if (!isAvailable) {
-      console.log("Selected slot is not available in doctor's schedule.");
-      return res.status(409).json({ error: "Selected slot is not available." });
-    }
-
-    const existedAppoint = await Appointment.findOne({
-      dr_id: doctor._id,
-      date: requestedDateISO,
-      time,
-      status: { $ne: "cancelled" },
-    });
-    if (existedAppoint) {
-      console.log("Slot already booked for this doctor at this time.");
-      return res
-        .status(409)
-        .json({ error: "Slot already booked by another patient." });
-    }
-
-    const newAppointment = new Appointment({
-      dr_id: doctor._id,
-      patient_Id: req.user._id,
-      date: appointmentDate,
-      time,
-      notes,
-      symptoms,
-      signs,
-      status: "booked",
-    });
-    await newAppointment.save();
-    console.log("New appointment booked:", newAppointment._id);
-    res.status(201).json(newAppointment);
-  } catch (err) {
-    console.error("Server error during appointment booking:", err);
-    if (err.name === "CastError") {
-      return res.status(400).json({ error: "Invalid Doctor ID format." });
-    }
-    if (err.name === "ValidationError") {
-      return res.status(400).json({ error: err.message });
-    }
-    res.status(500).json({ error: "Server error during appointment booking." });
-  }
-});
 // --- Get All Appointments (for AppointmentsPage) ---
 app.get("/api/appointments", authenticate, async (req, res) => {
   try {
@@ -680,12 +642,17 @@ app.delete(
       if (!doctor) {
         return res.status(404).json({ error: "Doctor not found" });
       }
+
       if (doctor.user_id) {
         await User.deleteOne({ _id: doctor.user_id });
         console.log(
           `Associated User ${doctor.user_id} deleted for doctor profile.`
         );
       }
+
+      // Delete ALL appointments for this doctor (FIXED)
+      await Appointment.deleteMany({ dr_id: doctor._id }); // Use doctor._id, not user._id
+
       res.json({ message: "Doctor deleted successfully" });
     } catch (err) {
       console.error("Error deleting doctor:", err);
@@ -910,7 +877,7 @@ app.get("/api/users", authenticate, authorize(["admin"]), async (req, res) => {
   }
 });
 
-// --- Admin Side: Update Any User (NEW ENDPOINT) ---
+// --- Admin Side: Update Any User (NEW ENDPOINT)
 app.patch(
   "/api/users/:id",
   authenticate,
@@ -1178,4 +1145,15 @@ app.delete(
 );
 app.listen(PORT, () => {
   console.log(`listening to server on ${PORT}`);
+});
+
+app.get("/health", (req, res) => {
+  const healthcheck = {
+    uptime: process.uptime(),
+    message: "OK",
+    timestamp: Date.now(),
+    mongoStatus:
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+  };
+  res.status(200).json(healthcheck);
 });

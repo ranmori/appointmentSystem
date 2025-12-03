@@ -3,3 +3,11 @@
 /.env
 .env
 .env.local
+
+node_modules/
+
+#build_directories
+dist/
+build/
+#vscode
+.vscode/

@@ -94,7 +94,7 @@ const App = createBrowserRouter([
           },
           {
             path: "/admin/users", // This path matches the 'to' prop from the Link
-            element: <UserManagement />, // This tells React Router to render your UserManagement component
+            element: <UserManagement />, // 
           },
           {
             path: "/admin/doctors", // <<< NEW ADMIN DOCTOR MANAGEMENT ROUTE

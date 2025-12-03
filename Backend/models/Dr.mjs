@@ -6,11 +6,16 @@ const drSchema = new mongoose.Schema({
   availability: [
     {
       date: Date,
-      slots:  [{ type: String, required: true }],
+      slots: [{ type: String, required: true }],
     },
   ],
-  image: { type: String, default: "https://via.placeholder.com/150/cccccc/ffffff?text=U" }
+  image: {
+    type: String,
+    default: "https://via.placeholder.com/150/cccccc/ffffff?text=U",
+  },
 });
+drSchema.index({ user_id: 1 }, { unique: true });
+drSchema.index({ specialization: 1 });
 
 const Dr = mongoose.model("Dr", drSchema);
 export default Dr;
