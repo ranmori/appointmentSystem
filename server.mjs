@@ -12,8 +12,7 @@ import Dr from "./Backend/models/Dr.mjs";
 import Appointment from "./Backend/models/Appointment.mjs";
 
 dotenv.config();
-// validate missing enviornmental variables
-const requiredEnvVars = [
+// validate missing environmental variablesconst requiredEnvVars = [
   "PORT",
   "MongoDB",
   "JWT_SECRET",
@@ -51,7 +50,7 @@ app.options("*", cors());
 // Different limits for different routes
 app.use("/api/appointments", express.json({ limit: "1mb" }));
 app.use("/api/users/me", express.json({ limit: "10mb" }));
-app.use(express.json({ limit: "50mb" }));
+
 // ports
 const PORT = process.env.PORT || 3022;
 const MongoDB = process.env.MongoDB;
@@ -230,9 +229,9 @@ app.post("/auth/login", limiter, async (req, res) => {
     if (!user || !bcrypt.compare(password, user.password)) {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: "Invalid username or password" });
-    }    // --- FIX: Ensure `role` is in JWT payload for login ---
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
+    }
+
+    // --- FIX: Ensure `role` is in JWT payload for login ---      { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
       {
         // Include role here explicitly

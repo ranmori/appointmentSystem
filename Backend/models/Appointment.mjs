@@ -12,10 +12,9 @@ const appointSchema = new mongoose.Schema({
   },
   notes: String,
 });
-appointmentSchema.index({ dr_id: 1, date: 1, time: 1 });
-appointmentSchema.index({ patient_Id: 1, date: -1 });
-appointmentSchema.index({ status: 1 });
-
+appointSchema.index({ dr_id: 1, date: 1, time: 1 });
+appointSchema.index({ patient_Id: 1, date: -1 });
+appointSchema.index({ status: 1 });
 const Appointment = mongoose.model("Appointment", appointSchema);
 
 export default Appointment;

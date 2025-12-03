@@ -14,8 +14,6 @@ const drSchema = new mongoose.Schema({
     default: "https://via.placeholder.com/150/cccccc/ffffff?text=U",
   },
 });
-drSchema.index({ user_id: 1 }, { unique: true });
-drSchema.index({ specialization: 1 });
 
 const Dr = mongoose.model("Dr", drSchema);
 export default Dr;
