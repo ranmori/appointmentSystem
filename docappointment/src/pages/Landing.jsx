@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion as Motion } from "framer-motion"; // Import motion as Motion
+import { motion as Motion } from "framer-motion";
 
 export default function Landing() {
   const [text, setText] = useState("");
@@ -32,54 +32,47 @@ export default function Landing() {
     }
   };
 
-  // --- Framer Motion Animation Definitions ---
-
-  // Gradient Background Animation
   const gradientAnimation = {
     animate: {
-      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"], // Keyframes for background-position
+      backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
     },
     transition: {
-      duration: 8,
+      duration: 10,
       ease: "linear",
       repeat: Infinity,
     },
   };
 
-  // Text Scale Animation
   const textScaleVariants = {
     hidden: { scale: 0.8, opacity: 0 },
     visible: {
-      scale: [0.8, 1.1, 1], // Keyframes for scale
-      opacity: [0, 1, 1], // Keyframes for opacity
+      scale: [0.8, 1.05, 1],
+      opacity: [0, 1, 1],
       transition: {
-        duration: 0.8,
+        duration: 0.6,
         ease: "easeOut",
-        times: [0, 0.5, 1], // Corresponding times for keyframes
+        times: [0, 0.6, 1],
       },
     },
   };
 
-  // Float Animation for small circles
-  // Note: Framer Motion's 'transition' can include repeat settings directly
   const floatAnimation = {
     animate: {
-      y: [0, -20, 0], // translateY(0px) -> translateY(-20px) -> translateY(0px)
-      rotate: [0, 5, 0], // rotate(0deg) -> rotate(5deg) -> rotate(0deg)
+      y: [0, -15, 0],
+      rotate: [0, 3, 0],
     },
     transition: {
-      ease: "linear", // Using linear for simplicity, can customize
+      ease: "easeInOut",
       repeat: Infinity,
       repeatType: "loop",
-      duration: (props) => props.duration, // Dynamic duration from style prop
-      delay: (props) => props.delay, // Dynamic delay from style prop
+      duration: (props) => props.duration,
+      delay: (props) => props.delay,
     },
   };
 
-  // Shine Animation for Button
   const shineAnimation = {
     animate: {
-      backgroundPosition: ["0% center", "200% center"], // Animating background-position
+      backgroundPosition: ["0% center", "200% center"],
     },
     transition: {
       duration: 3,
@@ -89,29 +82,32 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-      {/* Animated Background */}
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-teal-50 via-blue-50 to-cyan-50">
+      {/* Soft animated background overlay */}
       <Motion.div
-        {...gradientAnimation} // Apply gradient animation
+        {...gradientAnimation}
         className="absolute inset-0 bg-gradient-to-r 
-          from-purple-500 via-pink-500 to-blue-500 bg-[length:400%_400%] 
-          opacity-90 mix-blend-screen"
+          from-teal-400/30 via-blue-400/20 to-cyan-400/30 bg-[length:400%_400%] 
+          opacity-70"
       />
 
-      {/* Floating Elements */}
+      {/* Floating Elements - softer, medical-themed colors */}
       <div className="absolute w-full h-full">
         {[...Array(6)].map((_, i) => (
           <Motion.div
             key={i}
-            variants={floatAnimation} // Apply float animation
+            variants={floatAnimation}
             animate="animate"
-            custom={{ duration: Math.random() * 5 + 5, delay: i * 2 }} // Pass dynamic props
-            className="absolute rounded-full bg-white/10"
+            custom={{ duration: Math.random() * 6 + 6, delay: i * 1.5 }}
+            className="absolute rounded-full"
             style={{
-              width: `${Math.random() * 50 + 20}px`,
-              height: `${Math.random() * 50 + 20}px`,
+              width: `${Math.random() * 60 + 30}px`,
+              height: `${Math.random() * 60 + 30}px`,
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
+              background: i % 2 === 0 
+                ? 'radial-gradient(circle, rgba(56, 178, 172, 0.15) 0%, rgba(56, 178, 172, 0.05) 100%)'
+                : 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)',
             }}
           />
         ))}
@@ -119,52 +115,89 @@ export default function Landing() {
 
       {/* Hero Content */}
       <div className="hero-content text-center relative z-10 p-4">
-        <div className="max-w-md mx-auto">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-8 animate-pulse">
+        <div className="max-w-3xl mx-auto">
+          <Motion.h1 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6"
+            style={{
+              background: 'linear-gradient(135deg, #0891b2 0%, #3b82f6 50%, #14b8a6 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
             DOC MEET.
-          </h1>
+          </Motion.h1>
 
-          <p className="py-6 text-lg sm:text-xl text-white/90">
-            Get your appointment with us with the{" "}
+          <Motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="py-6 text-xl sm:text-2xl text-gray-700 leading-relaxed"
+          >
+            Get your appointment with the{" "}
             <Motion.span
-              key={text} // Key changes when text changes, re-triggering animation
+              key={text}
               variants={textScaleVariants}
               initial="hidden"
               animate="visible"
-              className="inline-block bg-gradient-to-r from-yellow-400 to-pink-400 
-                bg-clip-text text-transparent font-bold"
+              className="inline-block font-bold"
+              style={{
+                background: 'linear-gradient(135deg, #14b8a6 0%, #0891b2 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
             >
               {text}
             </Motion.span>{" "}
-            doctor in the world
-          </p>
+            doctors in your area
+          </Motion.p>
 
-          {/* "Get Started" Button */}
+          {/* Get Started Button */}
           <Motion.button
-            {...shineAnimation} // Apply shine animation
-            className="btn btn-lg transform transition-all duration-300 
-            hover:scale-110 hover:shadow-2xl bg-gradient-to-r from-blue-400 via-white to-purple-500 
-            border-none text-white bg-[length:200%]"
+            {...shineAnimation}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
+            className="btn btn-lg px-10 py-4 text-lg font-semibold rounded-full
+            shadow-xl hover:shadow-2xl transition-all duration-300
+            text-white bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 
+            border-none bg-[length:200%] relative overflow-hidden"
             onClick={handleGetStarted}
           >
-            Get Started
+            <span className="relative z-10">Get Started</span>
           </Motion.button>
 
           {!isLogged && (
-            <div className="mt-4 text-white text-sm">
+            <Motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="mt-6 text-gray-600 text-base"
+            >
               Already have an account?{" "}
-              <Link to="/login" className="font-bold hover:underline">
+              <Link to="/login" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
                 Login
               </Link>
-            </div>
+            </Motion.div>
           )}
           {isLogged && (
-            <div className="mt-4 text-white text-sm">
+            <Motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="mt-6 text-gray-600 text-base"
+            >
               Continue to{" "}
-              <Link to="/dashboard" className="font-bold hover:underline">
+              <Link to="/dashboard" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
                 Dashboard
               </Link>
-            </div>
+            </Motion.div>
           )}
         </div>
       </div>

@@ -8,18 +8,15 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // api base url
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3022";
-
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(""); // Clear previous errors
+    setError("");
 
     try {
-      // Basic client-side validation
       if (!username || !password) {
         setError("Please enter both username and password.");
         setLoading(false);
@@ -34,40 +31,35 @@ export default function Login() {
 
       console.log("Login API response:", response.data);
 
-      // --- CRITICAL FIX: Store token and user info from response.data ---
-      const { token, user } = response.data; // Destructure both token and user
+      const { token, user } = response.data;
       if (token && user) {
         localStorage.setItem("token", token);
-        localStorage.setItem("username", user.username); // Store username for quick display
-        localStorage.setItem("userInfo", JSON.stringify(user)); // Store full user object
+        localStorage.setItem("username", user.username);
+        localStorage.setItem("userInfo", JSON.stringify(user));
         console.log(
           "Login successful! Token and user info stored in localStorage."
         );
-        navigate("/dashboard"); // Redirect to dashboard on successful login
+        navigate("/dashboard");
       } else {
         setError(
           "Login successful, but no token or user info received. Please try again."
         );
         console.error("Login response missing token or user:", response.data);
       }
-      // --- END CRITICAL FIX ---
     } catch (err) {
       console.error("Login error:", err);
 
       if (err.response) {
-        // Handle specific backend error messages
         setError(
           err.response.data.message ||
             err.response.data.error ||
             "Login failed."
         );
       } else if (err.request) {
-        // Network error
         setError(
           "No response from server. Please ensure the backend is running."
         );
       } else {
-        // Other unexpected errors
         setError("An unexpected error occurred during login.");
       }
     } finally {
@@ -76,20 +68,23 @@ export default function Login() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-500 to-pink-500 p-4">
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50 p-4">
       {loading ? (
-        <div className="text-white text-2xl font-bold">Logging in...</div>
+        <div className="text-cyan-600 text-2xl font-bold flex items-center gap-3">
+          <div className="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+          Logging in...
+        </div>
       ) : (
         <form
-          className="bg-white p-8 rounded-lg shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto flex flex-col items-center"
+          className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm md:max-w-md lg:max-w-lg mx-auto flex flex-col items-center border-2 border-cyan-100"
           onSubmit={handleSubmit}
         >
-          <h1 className="text-3xl font-extrabold text-gray-800 mb-6 w-full text-center">
-            Login
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent mb-6 w-full text-center">
+            Welcome Back
           </h1>
 
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded relative w-full mb-4 text-sm">
+            <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-4 py-3 rounded-xl relative w-full mb-4 text-sm">
               {error}
             </div>
           )}
@@ -104,7 +99,7 @@ export default function Login() {
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-700 placeholder-gray-500"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-gray-700 placeholder-gray-400 transition-all"
               aria-label="Username"
               required
             />
@@ -120,7 +115,7 @@ export default function Login() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400 focus:border-transparent text-gray-700 placeholder-gray-500"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-gray-700 placeholder-gray-400 transition-all"
               aria-label="Password"
               required
             />
@@ -128,7 +123,7 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-teal-600 text-white font-semibold py-2.5 px-4 rounded-md hover:from-blue-700 hover:to-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-300 ease-in-out transform hover:scale-105"
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold py-3.5 px-4 rounded-xl hover:from-cyan-600 hover:to-blue-700 focus:outline-none focus:ring-4 focus:ring-cyan-300 transition duration-300 ease-in-out transform hover:scale-[1.02] shadow-lg"
             disabled={loading}
           >
             {loading ? "Logging In..." : "Log In"}
@@ -142,7 +137,7 @@ export default function Login() {
 
           <Link
             to="/register"
-            className="w-full bg-gray-100 text-gray-800 font-semibold py-2.5 px-4 rounded-md border border-gray-300 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition duration-300 ease-in-out transform hover:scale-105 text-center block"
+            className="w-full bg-white text-cyan-600 font-semibold py-3.5 px-4 rounded-xl border-2 border-cyan-500 hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-cyan-200 transition duration-300 ease-in-out transform hover:scale-[1.02] text-center block"
           >
             Don't have an account? Register
           </Link>

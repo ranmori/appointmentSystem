@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
-import axios from "axios";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -12,7 +11,8 @@ import Dr from "./Backend/models/Dr.mjs";
 import Appointment from "./Backend/models/Appointment.mjs";
 
 dotenv.config();
-// validate missing environmental variablesconst requiredEnvVars = [
+// validate missing environmental variables
+const requiredEnvVars = [
   "PORT",
   "MongoDB",
   "JWT_SECRET",
@@ -35,6 +35,7 @@ if (process.env.JWT_SECRET.length < 32) {
   process.exit(1);
 }
 const app = express();
+// CORS configuration
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -43,13 +44,11 @@ app.use(
     credentials: true,
   })
 );
-// handle preflight
-app.options("*", cors());
-
+// // handle preflight
+// app.options("*", cors());
 
 // Different limits for different routes
-app.use("/api/appointments", express.json({ limit: "1mb" }));
-app.use("/api/users/me", express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "10mb" }));
 
 // ports
 const PORT = process.env.PORT || 3022;
@@ -58,8 +57,6 @@ const MongoDB = process.env.MongoDB;
 // connect to mongodb
 mongoose
   .connect(MongoDB, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     maxPoolSize: 10,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
@@ -67,23 +64,26 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => {
     console.error("MongoDB connection error:", err);
-    process.exit(1); // Exit if can't connect to database
+    process.exit(1);
   });
 
 // add a rate limiter
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: "Too many requests, please try again later.",
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 const strictLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5, // Only 5 login attempts per 15 minutes
+  max: 5,
   skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
-app.use("/auth/login", strictLimiter);
 // api routes
 // Register
 app.post("/auth/register", limiter, async (req, res) => {
@@ -217,7 +217,8 @@ app.post("/auth/register", limiter, async (req, res) => {
 });
 
 // --- Login Route ---
-app.post("/auth/login", limiter, async (req, res) => {
+// --- Login Route ---
+app.post("/auth/login", strictLimiter, async (req, res) => {
   console.log("Login route hit! Request body:", req.body);
   try {
     const { username, password } = req.body;
@@ -226,17 +227,15 @@ app.post("/auth/login", limiter, async (req, res) => {
     }
 
     const user = await User.findOne({ username });
-    if (!user || !bcrypt.compare(password, user.password)) {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: "Invalid username or password" });
     }
 
-    // --- FIX: Ensure `role` is in JWT payload for login ---      { userId: user._id, role: user.role },
+    // --- FIX: Ensure `role` is in JWT payload for login ---
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
       process.env.JWT_SECRET,
-      {
-        // Include role here explicitly
-        expiresIn: "1h",
-      }
+      { expiresIn: "24h" }
     );
 
     // --- FIX: Return full user object (including role, name, image) for login ---
@@ -246,10 +245,10 @@ app.post("/auth/login", limiter, async (req, res) => {
         _id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role, // Explicitly include role
-        name: user.name, // Explicitly include name
-        image: user.image, // Explicitly include image
-        location: user.location, // Explicitly include location
+        role: user.role,
+        name: user.name,
+        image: user.image,
+        location: user.location,
       },
     });
   } catch (err) {
@@ -1141,17 +1140,24 @@ app.delete(
     }
   }
 );
+
+// app.get("/health", (req, res) => {
+//   const healthcheck = {
+//     uptime: process.uptime(),
+//     message: "OK",
+//     timestamp: Date.now(),
+//     mongoStatus:
+//       mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+//   };
+//   res.status(200).json(healthcheck);
+// });
+// // route to undefines routes
+// app.all('*', (req, res) => {
+//   res.status(404).json({
+//     error: `Can't find ${req.originalUrl} on this server!`
+//   });
+// });
+
 app.listen(PORT, () => {
   console.log(`listening to server on ${PORT}`);
-});
-
-app.get("/health", (req, res) => {
-  const healthcheck = {
-    uptime: process.uptime(),
-    message: "OK",
-    timestamp: Date.now(),
-    mongoStatus:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-  };
-  res.status(200).json(healthcheck);
 });

@@ -9,8 +9,6 @@ import {
   FaSignOutAlt,
   FaSignInAlt,
   FaUserPlus,
-  FaBell,
-  FaBriefcaseMedical,
 } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -26,6 +24,7 @@ export default function SideBar() {
   const [loadingAppointmentCount, setLoadingAppointmentCount] = useState(true);
 
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3022";
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
@@ -69,14 +68,12 @@ export default function SideBar() {
 
         let count = 0;
         if (userInfo.role === "admin") {
-          // For admin, fetch pending appointments from the summary endpoint
           const summaryResponse = await axios.get(
             `${API_BASE_URL}/api/admin/summary`,
             config
           );
           count = summaryResponse.data.pendingAppointments || 0;
         } else {
-          // For patient/doctor, fetch their specific appointments
           const response = await axios.get(
             `${API_BASE_URL}/api/appointments`,
             config
@@ -133,13 +130,6 @@ export default function SideBar() {
   }, [API_BASE_URL, isLoggedIn, navigate]);
 
   const isDoctor = user?.role === "doctor";
-  console.log(
-    "SideBar.jsx (render): isDoctor =",
-    isDoctor,
-    " (user.role:",
-    user?.role,
-    ")"
-  );
 
   const allNavItems = [
     {
@@ -149,7 +139,6 @@ export default function SideBar() {
       requiresAuth: true,
       showFor: ["patient", "doctor"],
     },
-    // Removed 'admin' from showFor for these two items:
     {
       name: "Appointments",
       path: "/appointments",
@@ -165,8 +154,6 @@ export default function SideBar() {
       requiresAuth: true,
       showFor: ["patient"],
     },
-
-    // Removed 'admin' from showFor for this item:
     {
       name: "Doctors",
       path: "/doctors",
@@ -229,51 +216,49 @@ export default function SideBar() {
     }
     return false;
   });
-  console.log(
-    "SideBar.jsx (render): Filtered Nav Items:",
-    filteredNavItems.map((item) => item.name)
-  );
 
   return (
-    <div className="w-64 min-h-screen bg-white text-gray-800 p-6 shadow-xl flex flex-col border-r border-gray-200">
+    <div className="w-64 min-h-screen bg-gradient-to-b from-white to-teal-50 text-gray-800 p-6 shadow-xl flex flex-col border-r-2 border-teal-100">
       <Link
         to="/dashboard"
-        className="flex items-center gap-2 cursor-pointer mb-20"
+        className="flex items-center gap-3 cursor-pointer mb-12 group"
       >
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-700 rounded-full flex items-center justify-center text-white font-bold">
-          <span className="text-xl">0</span>
+        <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg group-hover:shadow-xl transition-all">
+          <span className="text-2xl">D</span>
         </div>
-        <span className="text-xl font-semibold text-gray-800">Doc Meet.</span>
+        <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+          Doc Meet.
+        </span>
       </Link>
 
       <nav className="flex-grow">
-        <h2 className="text-sm font-semibold text-gray-600 uppercase mb-4">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4 tracking-wider">
           Primary Menu
         </h2>
-        <ul className="space-y-3">
+        <ul className="space-y-2">
           {filteredNavItems.map((item) => (
             <li key={item.name}>
               <Link
                 to={item.path}
-                className={`flex items-center p-3 rounded-lg text-lg font-medium transition-colors duration-200 
+                className={`flex items-center p-3.5 rounded-xl text-base font-medium transition-all duration-200 
                   ${
                     location.pathname === item.path
-                      ? "bg-blue-300 text-white shadow-md"
-                      : "text-gray-700 hover:bg-blue-100 hover:text-blue-600"
+                      ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg scale-105"
+                      : "text-gray-700 hover:bg-teal-50 hover:text-teal-700 hover:scale-102"
                   }
                 `}
               >
-                <item.icon className="mr-3 text-xl" />
+                <item.icon className="mr-3 text-lg" />
                 {item.name}
                 {item.showBadge &&
                   !loadingAppointmentCount &&
                   appointmentCount > 0 && (
-                    <span className="ml-auto bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+                    <span className="ml-auto bg-cyan-500 text-white text-xs px-2.5 py-1 rounded-full font-bold shadow-md">
                       {appointmentCount}
                     </span>
                   )}
                 {item.showBadge && loadingAppointmentCount && (
-                  <span className="ml-auto text-gray-400 text-xs px-2 py-0.5 rounded-full font-semibold">
+                  <span className="ml-auto text-gray-400 text-xs px-2 py-0.5 rounded-full">
                     ...
                   </span>
                 )}
@@ -283,26 +268,26 @@ export default function SideBar() {
         </ul>
       </nav>
 
-      <div className="border-t border-gray-200 my-6"></div>
+      <div className="border-t-2 border-teal-100 my-6"></div>
 
-      <h2 className="text-sm font-semibold text-gray-600 uppercase mb-4">
+      <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4 tracking-wider">
         Account
       </h2>
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {!isLoggedIn ? (
           authNavItems.map((item) => (
             <li key={item.name}>
               <Link
                 to={item.path}
-                className={`flex items-center p-3 rounded-lg text-lg font-medium transition-colors duration-200 
+                className={`flex items-center p-3.5 rounded-xl text-base font-medium transition-all duration-200 
                   ${
                     location.pathname === item.path
-                      ? "bg-blue-600 text-white shadow-md"
-                      : "text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                      ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg"
+                      : "text-gray-700 hover:bg-teal-50 hover:text-teal-700"
                   }
                 `}
               >
-                <item.icon className="mr-3 text-xl" />
+                <item.icon className="mr-3 text-lg" />
                 {item.name}
               </Link>
             </li>
@@ -311,9 +296,9 @@ export default function SideBar() {
           <li>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center p-3 rounded-lg text-lg font-medium bg-red-600 hover:bg-red-700 text-white transition-colors duration-200 shadow-md"
+              className="w-full flex items-center justify-center p-3.5 rounded-xl text-base font-semibold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              <FaSignOutAlt className="mr-3 text-xl" />
+              <FaSignOutAlt className="mr-3 text-lg" />
               Logout
             </button>
           </li>
