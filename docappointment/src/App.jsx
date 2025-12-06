@@ -1,120 +1,107 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { createBrowserRouter, Outlet, Navigate } from "react-router-dom";
-import Layout from "./components/Layout.jsx"; // <<< Import your new Layout component
 
-// Import all your page components
-import Book from "./pages/Book.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
-import DoctorList from "./pages/DoctorList.jsx";
-import Login from "./pages/Login.jsx";
-import AboutPage from "./pages/AboutPage";
-import BookingPage from "./pages/BookingPage.jsx";
-import Register from "./pages/Register.jsx";
-import Landing from "./pages/Landing.jsx";
-import Appointments from "./pages/Appointments.jsx";
-import UserManagement from "./pages/UserManagement.jsx";
-import DoctorManagement from "./pages/DoctorManagement.jsx";
-import AppointmentManagement from "./pages/AppointmentManagement.jsx"; // <<< IMPORT APPOINTMENT MANAGEMENT
-import NotFound from "./pages/NotFound.jsx";
-import ProfileSettings from "./pages/profileSettings.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx"; // <<< IMPORT ADMIN DASHBOARD
+// --- Lazy-loaded components ---
+// Public pages
+const Landing = lazy(() => import("./pages/Landing.jsx"));
+const Login = lazy(() => import("./pages/Login.jsx"));
+const Register = lazy(() => import("./pages/Register.jsx"));
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
-// --- Authentication Placeholder ---
+// Protected layout
+const Layout = lazy(() => import("./components/Layout.jsx"));
+
+// User pages
+const Dashboard = lazy(() => import("./pages/Dashboard.jsx"));
+const DoctorList = lazy(() => import("./pages/DoctorList.jsx"));
+const Book = lazy(() => import("./pages/Book.jsx"));
+const BookingPage = lazy(() => import("./pages/BookingPage.jsx"));
+const Appointments = lazy(() => import("./pages/Appointments.jsx"));
+const AboutPage = lazy(() => import("./pages/AboutPage.jsx"));
+const ProfileSettings = lazy(() => import("./pages/profileSettings.jsx"));
+
+// Admin pages
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard.jsx"));
+const UserManagement = lazy(() => import("./pages/UserManagement.jsx"));
+const DoctorManagement = lazy(() => import("./pages/DoctorManagement.jsx"));
+const AppointmentManagement = lazy(() =>
+  import("./pages/AppointmentManagement.jsx")
+);
+
+// --- Authentication Check ---
 const isAuthenticated = () => {
   const token = localStorage.getItem("token");
-  console.log("isAuthenticated check: Token found in localStorage?", !!token);
-  console.log("isAuthenticated check: Raw token value:", token);
   return !!token;
 };
 
 // --- ProtectedRoutes Component ---
-// This component acts as a guard for routes that require authentication.
 const ProtectedRoutes = () => {
-  console.log("ProtectedRoutes rendering...");
-  const authStatus = isAuthenticated();
-  console.log("ProtectedRoutes: Authentication Status:", authStatus);
-  return authStatus ? <Outlet /> : <Navigate to="/login" replace />;
+  return isAuthenticated() ? <Outlet /> : <Navigate to="/login" replace />;
 };
+
+// --- WRAP ROUTES WITH SUSPENSE ---
+const withSuspense = (element) => (
+  <Suspense fallback={<div className="p-6 text-center">Loading...</div>}>
+    {element}
+  </Suspense>
+);
 
 // --- Main Router Configuration ---
 const App = createBrowserRouter([
   {
     path: "/",
-    element: <Landing />, // Your landing page (public, no layout)
-    errorElement: <NotFound />,
+    element: withSuspense(<Landing />),
+    errorElement: withSuspense(<NotFound />),
   },
   {
     path: "/login",
-    element: <Login />, // Login page (public, no layout)
+    element: withSuspense(<Login />),
   },
   {
     path: "/register",
-    element: <Register />, // Register page (public, no layout)
+    element: withSuspense(<Register />),
   },
+
+  // --- Protected Routes ---
   {
-    // This route acts as a parent for all routes that need authentication
     element: <ProtectedRoutes />,
     children: [
       {
-        // This is the LAYOUT route. All routes nested here will render inside the Layout.
-        // It has no 'path' property itself, meaning it will render for all child paths.
-        element: <Layout />, // <<< Apply the Layout component here
+        element: withSuspense(<Layout />),
         children: [
-          {
-            path: "/dashboard",
-            element: <Dashboard />, // Will render inside Layout's <Outlet />
-          },
-          {
-            path: "/doctors",
-            element: <DoctorList />, // Will render inside Layout's <Outlet />
-          },
-          {
-            path: "/book",
-            element: <Book />, // Will render inside Layout's <Outlet />
-          },
-          {
-            path: "/BookingPage",
-            element: <BookingPage />, // Will render inside Layout's <Outlet />
-          },
-          {
-            path: "/Appointments",
-            element: <Appointments />, // Will render inside Layout's <Outlet />
-          },
-          {
-            path: "/About",
-            element: <AboutPage />, // Will render inside Layout's <Outlet />
-          },
+          { path: "/dashboard", element: withSuspense(<Dashboard />) },
+          { path: "/doctors", element: withSuspense(<DoctorList />) },
+          { path: "/book", element: withSuspense(<Book />) },
+          { path: "/BookingPage", element: withSuspense(<BookingPage />) },
+          { path: "/Appointments", element: withSuspense(<Appointments />) },
+          { path: "/About", element: withSuspense(<AboutPage />) },
           {
             path: "/ProfileSettings",
-            element: <ProfileSettings />,
+            element: withSuspense(<ProfileSettings />),
+          },
+
+          // Admin
+          {
+            path: "/admin/dashboard",
+            element: withSuspense(<AdminDashboard />),
+          },
+          { path: "/admin/users", element: withSuspense(<UserManagement />) },
+          {
+            path: "/admin/doctors",
+            element: withSuspense(<DoctorManagement />),
           },
           {
-            path: "/admin/dashboard", // <<< NEW ADMIN DASHBOARD ROUTE
-            element: <AdminDashboard />, // Will render inside Layout's <Outlet />
+            path: "/admin/appointments",
+            element: withSuspense(<AppointmentManagement />),
           },
-          {
-            path: "/admin/users", // This path matches the 'to' prop from the Link
-            element: <UserManagement />, // 
-          },
-          {
-            path: "/admin/doctors", // <<< NEW ADMIN DOCTOR MANAGEMENT ROUTE
-            element: <DoctorManagement />,
-          },
-          {
-            path: "/admin/appointments", // <<< NEW ADMIN APPOINTMENT MANAGEMENT ROUTE
-            element: <AppointmentManagement />,
-          },
-          // Add placeholders for other authenticated routes that use the layout
         ],
       },
-      // You can add other protected routes here that *don't* use the layout,
-      // but typically most authenticated routes use the main layout.
     ],
   },
+
   {
-    // Global fallback for any routes not matched by the above
     path: "*",
-    element: <NotFound />,
+    element: withSuspense(<NotFound />),
   },
 ]);
 

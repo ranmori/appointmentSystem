@@ -18,5 +18,8 @@
     "express-rate-limit": "^7.5.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.1"
+  },
+  "devDependencies": {
+    "vite-plugin-remove-console": "^2.2.0"
   }
 }

@@ -49,6 +49,10 @@ app.use(
 
 // Different limits for different routes
 app.use(express.json({ limit: "10mb" }));
+// production
+if (process.env.NODE_ENV === "production") {
+  console.log = function () {};
+}
 
 // ports
 const PORT = process.env.PORT || 3022;
@@ -135,7 +139,7 @@ app.post("/auth/register", limiter, async (req, res) => {
     // Use 12-14 rounds minimum
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
-    console.log("Password hashed.");
+    // console.log("Password hashed.");
 
     const newUser = new User({
       email,
