@@ -13,6 +13,18 @@ import Appointment from "./Backend/models/Appointment.mjs";
 
 dotenv.config();
 // validate missing environmental variables
+const logger = winston.createLogger({
+  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    }),
+  ],
+});
 const requiredEnvVars = [
   "PORT",
   "MongoDB",
@@ -50,18 +62,6 @@ app.use(
 
 // Different limits for different routes
 app.use(express.json({ limit: "10mb" }));
-const logger = winston.createLogger({
-  level: process.env.NODE_ENV === "production" ? "info" : "debug",
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.simple(),
-    }),
-  ],
-});
 
 // production
 // if (process.env.NODE_ENV === "production") {
