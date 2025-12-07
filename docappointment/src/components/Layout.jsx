@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom'; // Essential for nested routes
 import NavBar from './NavBar'; // Your existing NavBar component
-import SideBar from '../pages/SideBar'; // Your existing SideBar component
+import SideBar from './sideBar'; // Your existing SideBar component
 
 export default function Layout() {
   return (
