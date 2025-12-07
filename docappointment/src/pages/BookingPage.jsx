@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from "react"; // Ensure useEffect is imported
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-
-import { useNavigate, useSearchParams } from "react-router-dom"; // Import useNavigate and useSearchParams
-import GetUserInfo from "../utils/GetUserInfo.jsx"; // Import GetUserInfo utility
+import { useNavigate, useSearchParams } from "react-router-dom";
+import GetUserInfo from "../utils/GetUserInfo.jsx";
 
 export default function BookingPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams(); // Hook to read query parameters
+  const [searchParams] = useSearchParams();
   const doctorIdFromUrl = searchParams.get("doctorId");
   const [Form, setForm] = useState({
     name: "",
@@ -14,91 +13,79 @@ export default function BookingPage() {
     phone: "",
     date: "",
     time: "",
-    doctorId: doctorIdFromUrl || "", // Pre-fill doctorId from URL query param
+    doctorId: doctorIdFromUrl || "",
     symptoms: "",
     signs: "",
   });
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [user, setUser] = useState(null); // State to hold current user info
+  const [user, setUser] = useState(null);
 
-  //  api url base
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3022";
 
-  // --- CRITICAL: useEffect to load user info and token ---
   useEffect(() => {
     const loadUserInfo = async () => {
       const userInfo = await GetUserInfo();
       if (userInfo && userInfo.token) {
         setUser(userInfo);
-        // Optionally pre-fill name/email/phone from userInfo if available
         setForm((prevForm) => ({
           ...prevForm,
-          name: prevForm.name || userInfo.username || "", // Only set if not already typed/pre-filled
+          name: prevForm.name || userInfo.username || "",
           email: prevForm.email || userInfo.email || "",
         }));
       } else {
-        // If no user info, redirect to login (this page requires authentication)
         navigate("/login");
       }
     };
     loadUserInfo();
   }, [navigate]);
-  // --- END CRITICAL useEffect ---
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccessMessage("");
 
-    // --- CRITICAL: Check for user and token before submitting ---
     if (!user || !user.token) {
       setError(
         "You must be logged in to book an appointment. Redirecting to login."
       );
-      navigate("/login"); // Ensure user is logged in
+      navigate("/login");
       return;
     }
-    // --- END CRITICAL Check ---
 
     try {
-      // --- CRITICAL: Attach Authorization header ---
       const config = {
         headers: {
-          Authorization: `Bearer ${user.token}`, // Use the token from the 'user' state
+          Authorization: `Bearer ${user.token}`,
         },
       };
       console.log("BookingPage: Form state before submission:", Form);
 
-      // IMPORTANT: Use the full backend URL for your API call
       const response = await axios.post(
         `${API_BASE_URL}/api/appointments`,
         Form,
         config
       );
-      // --- END CRITICAL Attach Header ---
 
       console.log("Appointment booked successfully:", response.data);
       setSuccessMessage("Appointment booked successfully!");
 
       setTimeout(() => {
         setForm({
-          // Reset form fields
           name: "",
           email: "",
           phone: "",
           date: "",
           time: "",
-          doctorId: searchParams.get("doctorId") || "", // Keep doctorId if from URL
+          doctorId: searchParams.get("doctorId") || "",
           symptoms: "",
           signs: "",
         });
-        navigate("/dashboard"); // Redirect to dashboard or a success page
+        navigate("/dashboard");
       }, 2000);
     } catch (err) {
       console.error({ "error booking appointment": err });
       if (err.response) {
-        // Handle 401 specifically: token expired or invalid
         if (err.response.status === 401) {
           setError("Session expired or unauthorized. Please log in again.");
           localStorage.removeItem("token");
@@ -121,188 +108,184 @@ export default function BookingPage() {
     }
   };
 
-  // --- CRITICAL: Show loading/redirect if user data not yet loaded ---
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center">
-        <p className="text-white text-xl">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center px-4">
+        <p className="text-gray-700 text-lg sm:text-xl">
           Loading user data or redirecting...
         </p>
       </div>
     );
   }
-  // --- END CRITICAL Loading State ---
 
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-green-500 flex items-center justify-center p-4">
-        <form
-          className="max-w-xl w-full bg-white shadow-xl rounded-lg p-8 space-y-6 border border-gray-200"
-          onSubmit={handleSubmit}
-        >
-          <h2 className="text-3xl font-extrabold text-gray-900 text-center mb-6">
-            Book Your Appointment
-          </h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4 sm:p-6">
+      <form
+        className="max-w-2xl w-full bg-white shadow-xl rounded-2xl p-6 sm:p-8 space-y-5 sm:space-y-6 border border-blue-100"
+        onSubmit={handleSubmit}
+      >
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 text-center mb-4 sm:mb-6 bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+          Book Your Appointment
+        </h2>
 
-          {successMessage && (
-            <div
-              className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative"
-              role="alert"
-            >
-              <span className="block sm:inline">{successMessage}</span>
-            </div>
-          )}
-          {error && (
-            <div
-              className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-              role="alert"
-            >
-              <span className="block sm:inline">{error}</span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                className="input input-bordered w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={Form.name}
-                onChange={(e) => setForm({ ...Form, name: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                className="input input-bordered w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={Form.email}
-                onChange={(e) => setForm({ ...Form, email: e.target.value })}
-                required
-              />
-            </div>
+        {successMessage && (
+          <div
+            className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative text-sm sm:text-base"
+            role="alert"
+          >
+            <span className="block sm:inline">{successMessage}</span>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Phone (Optional)
-              </label>
-              <input
-                id="phone"
-                type="tel"
-                className="input input-bordered w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={Form.phone}
-                onChange={(e) => setForm({ ...Form, phone: e.target.value })}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="date"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Date
-              </label>
-              <input
-                id="date"
-                type="date"
-                className="input input-bordered w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={Form.date}
-                onChange={(e) => setForm({ ...Form, date: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="time"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Time
-              </label>
-              <input
-                id="time"
-                type="time"
-                className="input input-bordered w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={Form.time}
-                onChange={(e) => setForm({ ...Form, time: e.target.value })}
-                required
-              />
-            </div>
+        )}
+        {error && (
+          <div
+            className="bg-red-100 border border-red-400  text-red-700 px-4 py-3 rounded-xl relative text-sm sm:text-base"
+            role="alert"
+          >
+            <span className="block sm:inline">{error}</span>
           </div>
+        )}
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="symptoms"
+              htmlFor="name"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Symptoms (What you feel)
-            </label>
-            <textarea
-              id="symptoms"
-              className="textarea textarea-bordered w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-y"
-              value={Form.symptoms}
-              onChange={(e) => setForm({ ...Form, symptoms: e.target.value })}
-              placeholder="e.g., headache, fever, cough, fatigue..."
-            ></textarea>
-          </div>
-
-          <div>
-            <label
-              htmlFor="signs"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Signs (What you observe)
-            </label>
-            <textarea
-              id="signs"
-              className="textarea textarea-bordered w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 resize-y"
-              value={Form.signs}
-              onChange={(e) => setForm({ ...Form, signs: e.target.value })}
-              placeholder="e.g., rash, swelling, redness, difficulty breathing..."
-            ></textarea>
-          </div>
-
-          <div>
-            <label
-              htmlFor="doctorId"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Doctor ID
+              Name
             </label>
             <input
-              id="doctorId"
+              id="name"
               type="text"
-              className="input input-bordered w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={Form.doctorId}
-              onChange={(e) => setForm({ ...Form, doctorId: e.target.value })}
+              className="w-full px-4 py-2.5 border border-gray-300  text-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
+              value={Form.name}
+              onChange={(e) => setForm({ ...Form, name: e.target.value })}
               required
             />
           </div>
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              className="w-full px-4 py-2.5 border border-gray-300 text-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
+              value={Form.email}
+              onChange={(e) => setForm({ ...Form, email: e.target.value })}
+              required
+            />
+          </div>
+        </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-md font-semibold hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out"
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label
+              htmlFor="phone"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Phone (Optional)
+            </label>
+            <input
+              id="phone"
+              type="tel"
+              className="w-full px-4 py-2.5 border border-gray-300 text-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
+              value={Form.phone}
+              onChange={(e) => setForm({ ...Form, phone: e.target.value })}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="date"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Date
+            </label>
+            <input
+              id="date"
+              type="date"
+              className="w-full px-4 py-2.5 border border-gray-300 text-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
+              value={Form.date}
+              onChange={(e) => setForm({ ...Form, date: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="time"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Time
+            </label>
+            <input
+              id="time"
+              type="time"
+              className="w-full px-4 py-2.5 border border-gray-300 text-black rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
+              value={Form.time}
+              onChange={(e) => setForm({ ...Form, time: e.target.value })}
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="symptoms"
+            className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Book Appointment
-          </button>
-        </form>
-      </div>
-    </>
+            Symptoms (What you feel)
+          </label>
+          <textarea
+            id="symptoms"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-20 sm:h-24 resize-y transition-all text-sm sm:text-base"
+            value={Form.symptoms}
+            onChange={(e) => setForm({ ...Form, symptoms: e.target.value })}
+            placeholder="e.g., headache, fever, cough, fatigue..."
+          ></textarea>
+        </div>
+
+        <div>
+          <label
+            htmlFor="signs"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Signs (What you observe)
+          </label>
+          <textarea
+            id="signs"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl text-black focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-20 sm:h-24 resize-y transition-all text-sm sm:text-base"
+            value={Form.signs}
+            onChange={(e) => setForm({ ...Form, signs: e.target.value })}
+            placeholder="e.g., rash, swelling, redness, difficulty breathing..."
+          ></textarea>
+        </div>
+
+        <div>
+          <label
+            htmlFor="doctorId"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Doctor ID
+          </label>
+          <input
+            id="doctorId"
+            type="text"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm sm:text-base"
+            value={Form.doctorId}
+            onChange={(e) => setForm({ ...Form, doctorId: e.target.value })}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-gradient-to-r from-blue-500 to-green-600 text-white py-3 sm:py-3.5 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out shadow-lg hover:shadow-xl text-base sm:text-lg"
+        >
+          Book Appointment
+        </button>
+      </form>
+    </div>
   );
 }

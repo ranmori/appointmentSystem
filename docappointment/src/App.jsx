@@ -40,10 +40,31 @@ const ProtectedRoutes = () => {
 };
 
 // --- WRAP ROUTES WITH SUSPENSE ---
+class LazyLoadErrorBoundary extends React.Component {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 text-center">
+          <p>Failed to load. Please refresh the page.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const withSuspense = (element) => (
-  <Suspense fallback={<div className="p-6 text-center">Loading...</div>}>
-    {element}
-  </Suspense>
+  <LazyLoadErrorBoundary>
+    <Suspense fallback={<div className="p-6 text-center">Loading...</div>}>
+      {element}
+    </Suspense>
+  </LazyLoadErrorBoundary>
 );
 
 // --- Main Router Configuration ---

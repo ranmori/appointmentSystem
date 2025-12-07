@@ -5,6 +5,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import winston from "winston";
 
 import User from "./Backend/models/User.mjs";
 import Dr from "./Backend/models/Dr.mjs";
@@ -24,14 +25,14 @@ const missingEnvVars = requiredEnvVars.filter(
 );
 
 if (missingEnvVars.length > 0) {
-  console.error(
+  logger.error(
     `Missing required environment variables: ${missingEnvVars.join(", ")}`
   );
   process.exit(1);
 }
 
 if (process.env.JWT_SECRET.length < 32) {
-  console.error("JWT_SECRET must be at least 32 characters long");
+  logger.error("JWT_SECRET must be at least 32 characters long");
   process.exit(1);
 }
 const app = express();
@@ -49,10 +50,23 @@ app.use(
 
 // Different limits for different routes
 app.use(express.json({ limit: "10mb" }));
+const logger = winston.createLogger({
+  level: process.env.NODE_ENV === "production" ? "info" : "debug",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    }),
+  ],
+});
+
 // production
-if (process.env.NODE_ENV === "production") {
-  console.log = function () {};
-}
+// if (process.env.NODE_ENV === "production") {
+//   logger.info = function () {};
+// }
 
 // ports
 const PORT = process.env.PORT || 3022;
@@ -65,9 +79,9 @@ mongoose
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
   })
-  .then(() => console.log("Connected to MongoDB"))
+  .then(() => logger.info("Connected to MongoDB"))
   .catch((err) => {
-    console.error("MongoDB connection error:", err);
+    logger.error("MongoDB connection error:", err);
     process.exit(1);
   });
 
@@ -103,7 +117,7 @@ app.post("/auth/register", limiter, async (req, res) => {
       location,
     } = req.body;
 
-    console.log("Registration attempt received for:", {
+    logger.info("Registration attempt received for:", {
       username,
       email,
       role,
@@ -114,7 +128,7 @@ app.post("/auth/register", limiter, async (req, res) => {
     });
 
     if (!username || !email || !password || !role) {
-      console.log(
+      logger.info(
         "Missing required registration fields (username, email, password, role)."
       );
       return res
@@ -122,7 +136,7 @@ app.post("/auth/register", limiter, async (req, res) => {
         .json({ error: "All required fields are missing." });
     }
     if (role === "doctor" && !specialization) {
-      console.log("Missing specialization for doctor role.");
+      logger.info("Missing specialization for doctor role.");
       return res
         .status(400)
         .json({ error: "Specialization is required for doctor registration." });
@@ -130,7 +144,7 @@ app.post("/auth/register", limiter, async (req, res) => {
 
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      console.log("User with this email or username already exists.");
+      logger.info("User with this email or username already exists.");
       return res.status(409).json({
         error: "Username or email already exists. Please use a different one.",
       });
@@ -139,7 +153,7 @@ app.post("/auth/register", limiter, async (req, res) => {
     // Use 12-14 rounds minimum
     const salt = await bcrypt.genSalt(12);
     const hashedPassword = await bcrypt.hash(password, salt);
-    // console.log("Password hashed.");
+    // logger.info("Password hashed.");
 
     const newUser = new User({
       email,
@@ -155,7 +169,7 @@ app.post("/auth/register", limiter, async (req, res) => {
       location: location || "",
     });
     await newUser.save();
-    console.log(
+    logger.info(
       "User saved to database! User ID:",
       newUser._id,
       "Role:",
@@ -163,7 +177,7 @@ app.post("/auth/register", limiter, async (req, res) => {
     );
 
     if (role === "doctor") {
-      console.log(
+      logger.info(
         "User registered as 'doctor', attempting to create Doctor profile..."
       );
       const newDoctorProfile = new Dr({
@@ -172,7 +186,7 @@ app.post("/auth/register", limiter, async (req, res) => {
         availability: [],
       });
       await newDoctorProfile.save();
-      console.log(
+      logger.info(
         "Doctor profile created and linked successfully:",
         newDoctorProfile._id
       );
@@ -185,7 +199,7 @@ app.post("/auth/register", limiter, async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    console.log(
+    logger.info(
       "JWT token generated for user:",
       newUser._id,
       "with role:",
@@ -207,7 +221,7 @@ app.post("/auth/register", limiter, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Backend Error during registration:", err);
+    logger.error("Backend Error during registration:", err);
     if (err.code === 11000) {
       return res.status(409).json({
         error: "Email or username already exists. Please use a different one.",
@@ -223,7 +237,7 @@ app.post("/auth/register", limiter, async (req, res) => {
 // --- Login Route ---
 // --- Login Route ---
 app.post("/auth/login", strictLimiter, async (req, res) => {
-  console.log("Login route hit! Request body:", req.body);
+  logger.info("Login route hit! Request body:", req.body);
   try {
     const { username, password } = req.body;
     if (!username || !password) {
@@ -256,7 +270,7 @@ app.post("/auth/login", strictLimiter, async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Backend Error during login:", err);
+    logger.error("Backend Error during login:", err);
     res.status(500).json({ error: "Internal server error during login" });
   }
 });
@@ -264,7 +278,7 @@ app.post("/auth/login", strictLimiter, async (req, res) => {
 const authenticate = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
-    console.log("Authentication failed: No token provided.");
+    logger.info("Authentication failed: No token provided.");
     return res.status(401).json({ error: "Unauthorized: No token provided" });
   }
   try {
@@ -278,7 +292,7 @@ const authenticate = async (req, res, next) => {
 
     req.user = await User.findById(decodedjwt.userId).select("-password");
     if (!req.user) {
-      console.log("Authentication failed: User not found from token ID.");
+      logger.info("Authentication failed: User not found from token ID.");
       return res.status(401).json({ error: "Unauthorized: User not found." });
     }
     // Ensure req.user object has the role from decoded token (important for subsequent checks)
@@ -286,7 +300,7 @@ const authenticate = async (req, res, next) => {
 
     next();
   } catch (error) {
-    console.error("Authentication error (JWT verify failed):", error);
+    logger.error("Authentication error (JWT verify failed):", error);
     res.status(401).json({ error: "Unauthorized: Invalid token." });
   }
 };
@@ -317,7 +331,7 @@ app.post("/api/appointments", authenticate, async (req, res) => {
 
     const doctor = await Dr.findOne({ user_id: doctorId });
     if (!doctor) {
-      console.log(`Doctor profile not found for user_id: ${doctorId}`);
+      logger.info(`Doctor profile not found for user_id: ${doctorId}`);
       return res.status(404).json({ error: "Doctor not found." });
     }
 
@@ -347,7 +361,7 @@ app.post("/api/appointments", authenticate, async (req, res) => {
     });
 
     if (!isAvailable) {
-      console.log("Selected slot is not available in doctor's schedule.");
+      logger.info("Selected slot is not available in doctor's schedule.");
       return res.status(409).json({ error: "Selected slot is not available." });
     }
 
@@ -358,7 +372,7 @@ app.post("/api/appointments", authenticate, async (req, res) => {
       status: { $ne: "cancelled" },
     });
     if (existedAppoint) {
-      console.log("Slot already booked for this doctor at this time.");
+      logger.info("Slot already booked for this doctor at this time.");
       return res
         .status(409)
         .json({ error: "Slot already booked by another patient." });
@@ -375,10 +389,10 @@ app.post("/api/appointments", authenticate, async (req, res) => {
       status: "booked",
     });
     await newAppointment.save();
-    console.log("New appointment booked:", newAppointment._id);
+    logger.info("New appointment booked:", newAppointment._id);
     res.status(201).json(newAppointment);
   } catch (err) {
-    console.error("Server error during appointment booking:", err);
+    logger.error("Server error during appointment booking:", err);
     if (err.name === "CastError") {
       return res.status(400).json({ error: "Invalid Doctor ID format." });
     }
@@ -445,7 +459,7 @@ app.get("/api/appointments", authenticate, async (req, res) => {
 
     res.status(200).json(appointments);
   } catch (error) {
-    console.error("Server Error in GET /api/appointments:", error);
+    logger.error("Server Error in GET /api/appointments:", error);
     res
       .status(500)
       .json({ error: "Server Error: Unable to retrieve appointments." });
@@ -497,7 +511,7 @@ app.get("/api/appointments/upcoming", authenticate, async (req, res) => {
 
     res.json(appointments);
   } catch (err) {
-    console.error("Server error fetching upcoming appointments:", err);
+    logger.error("Server error fetching upcoming appointments:", err);
     res
       .status(500)
       .json({ error: "Server error fetching upcoming appointments." });
@@ -541,7 +555,7 @@ app.get("/api/doctors", async (req, res) => {
 
     res.json(doctors);
   } catch (error) {
-    console.error("Error searching for doctors:", error);
+    logger.error("Error searching for doctors:", error);
     res.status(500).json({ error: "Server error during doctor search" });
   }
 });
@@ -580,7 +594,7 @@ app.post(
       await newDoctor.save();
       res.status(201).json(newDoctor);
     } catch (err) {
-      console.error("doctor creation error:", err);
+      logger.error("doctor creation error:", err);
       if (err.name === "ValidationError") {
         return res.status(400).json({ error: err.message });
       }
@@ -620,7 +634,7 @@ app.patch(
 
       res.json(doctor);
     } catch (err) {
-      console.error("Error updating doctor profile:", err);
+      logger.error("Error updating doctor profile:", err);
       if (err.name === "CastError") {
         return res.status(400).json({ error: "Invalid Doctor ID format" });
       }
@@ -646,7 +660,7 @@ app.delete(
 
       if (doctor.user_id) {
         await User.deleteOne({ _id: doctor.user_id });
-        console.log(
+        logger.info(
           `Associated User ${doctor.user_id} deleted for doctor profile.`
         );
       }
@@ -656,7 +670,7 @@ app.delete(
 
       res.json({ message: "Doctor deleted successfully" });
     } catch (err) {
-      console.error("Error deleting doctor:", err);
+      logger.error("Error deleting doctor:", err);
       res.status(500).json({ error: "Server error deleting doctor" });
     }
   }
@@ -701,7 +715,7 @@ app.patch(
       await doctor.save();
       res.json(doctor);
     } catch (err) {
-      console.error("Server error managing availability:", err);
+      logger.error("Server error managing availability:", err);
       if (err.name === "CastError") {
         return res.status(400).json({ error: "Invalid Doctor ID format" });
       }
@@ -759,7 +773,7 @@ app.patch("/api/appointments/:id/cancel", authenticate, async (req, res) => {
       updatedAppointment: appointment,
     });
   } catch (err) {
-    console.error("Server error during appointment cancellation:", err);
+    logger.error("Server error during appointment cancellation:", err);
     if (err.name === "CastError")
       return res.status(400).json({ error: "Invalid appointment ID" });
     res
@@ -784,7 +798,7 @@ app.get("/api/users/me", authenticate, async (req, res) => {
     }
     res.json(user);
   } catch (err) {
-    console.error("Server error fetching user profile:", err);
+    logger.error("Server error fetching user profile:", err);
     res.status(500).json({ error: "Server error fetching user profile" });
   }
 });
@@ -846,7 +860,7 @@ app.patch("/api/users/me", authenticate, async (req, res) => {
     const updatedUser = await User.findById(userId).select("-password").lean(); // Fetch updated user
     res.json({ message: "Profile updated successfully.", updatedUser });
   } catch (err) {
-    console.error("Error updating user profile (PATCH /api/users/me):", err);
+    logger.error("Error updating user profile (PATCH /api/users/me):", err);
     // Handle unique constraint errors (e.g., if new username/email already exists)
     if (err.code === 11000) {
       return res
@@ -873,7 +887,7 @@ app.get("/api/users", authenticate, authorize(["admin"]), async (req, res) => {
     }
     res.json(users);
   } catch (err) {
-    console.error("Error fetching all users:", err);
+    logger.error("Error fetching all users:", err);
     res.status(500).json({ error: "Server error fetching users" });
   }
 });
@@ -956,10 +970,7 @@ app.patch(
         updatedUser: finalUpdatedUser,
       });
     } catch (err) {
-      console.error(
-        "Error updating user by admin (PATCH /api/users/:id):",
-        err
-      );
+      logger.error("Error updating user by admin (PATCH /api/users/:id):", err);
       if (err.code === 11000) {
         return res
           .status(409)
@@ -987,17 +998,17 @@ app.delete(
       }
       if (user.role === "doctor" && user._id) {
         await Dr.deleteOne({ _id: user._id }); // Corrected: should be user_id, not _id
-        console.log(`Associated Doctor profile for user ${user._id} deleted.`);
+        logger.info(`Associated Doctor profile for user ${user._id} deleted.`);
       }
       // Also delete any appointments associated with this user (patient or doctor)
       await Appointment.deleteMany({
         $or: [{ patient_Id: user._id }, { dr_id: user._id }],
       });
-      console.log(`Associated appointments for user ${user._id} deleted.`);
+      logger.info(`Associated appointments for user ${user._id} deleted.`);
 
       res.json({ message: "User deleted successfully" });
     } catch (err) {
-      console.error("Error deleting user:", err);
+      logger.error("Error deleting user:", err);
       res.status(500).json({ error: "Server error deleting user" });
     }
   }
@@ -1024,7 +1035,7 @@ app.get(
         pendingAppointments,
       });
     } catch (error) {
-      console.error("Error fetching admin summary:", error);
+      logger.error("Error fetching admin summary:", error);
       res.status(500).json({ error: "Server error fetching admin summary." });
     }
   }
@@ -1060,7 +1071,7 @@ app.get(
 
       res.status(200).json(appointments);
     } catch (error) {
-      console.error("Server Error in GET /api/admin/appointments:", error);
+      logger.error("Server Error in GET /api/admin/appointments:", error);
       res.status(500).json({
         error: "Server Error: Unable to retrieve all appointments for admin.",
       });
@@ -1102,7 +1113,7 @@ app.patch(
         updatedAppointment: appointment,
       });
     } catch (err) {
-      console.error("Server error updating appointment status:", err);
+      logger.error("Server error updating appointment status:", err);
       if (err.name === "CastError") {
         return res
           .status(400)
@@ -1134,7 +1145,7 @@ app.delete(
 
       res.json({ message: "Appointment deleted successfully." });
     } catch (err) {
-      console.error("Server error deleting appointment by admin:", err);
+      logger.error("Server error deleting appointment by admin:", err);
       if (err.name === "CastError") {
         return res
           .status(400)
@@ -1163,5 +1174,5 @@ app.delete(
 // });
 
 app.listen(PORT, () => {
-  console.log(`listening to server on ${PORT}`);
+  logger.info(`listening to server on ${PORT}`);
 });

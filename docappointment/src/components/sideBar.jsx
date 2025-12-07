@@ -218,42 +218,42 @@ export default function SideBar() {
   });
 
   return (
-    <div className="w-64 min-h-screen bg-gradient-to-b from-white to-teal-50 text-gray-800 p-6 shadow-xl flex flex-col border-r-2 border-teal-100">
+    <div className="w-56 sm:w-60 md:w-64 min-h-screen bg-gradient-to-b from-white to-blue-50 text-gray-800 p-4 sm:p-5 md:p-6 shadow-xl flex flex-col border-r-2 border-blue-100">
       <Link
         to="/dashboard"
-        className="flex items-center gap-3 cursor-pointer mb-12 group"
+        className="flex items-center gap-2 sm:gap-3 cursor-pointer mb-8 sm:mb-10 md:mb-12 group"
       >
-        <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg group-hover:shadow-xl transition-all">
-          <span className="text-2xl">D</span>
+        <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-gradient-to-br from-blue-500 to-green-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg group-hover:shadow-xl transition-all flex-shrink-0">
+          <span className="text-lg sm:text-xl md:text-2xl">D</span>
         </div>
-        <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+        <span className="text-xl sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent truncate">
           Doc Meet.
         </span>
       </Link>
 
       <nav className="flex-grow">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4 tracking-wider">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase mb-3 sm:mb-4 tracking-wider">
           Primary Menu
         </h2>
-        <ul className="space-y-2">
+        <ul className="space-y-1.5 sm:space-y-2">
           {filteredNavItems.map((item) => (
             <li key={item.name}>
               <Link
                 to={item.path}
-                className={`flex items-center p-3.5 rounded-xl text-base font-medium transition-all duration-200 
+                className={`flex items-center p-2.5 sm:p-3 md:p-3.5 rounded-xl text-sm sm:text-base font-medium transition-all duration-200 
                   ${
                     location.pathname === item.path
-                      ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg scale-105"
-                      : "text-gray-700 hover:bg-teal-50 hover:text-teal-700 hover:scale-102"
+                      ? "bg-gradient-to-r from-blue-500 to-green-500 text-white shadow-lg"
+                      : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                   }
                 `}
               >
-                <item.icon className="mr-3 text-lg" />
-                {item.name}
+                <item.icon className="mr-2 sm:mr-3 text-base sm:text-lg flex-shrink-0" />
+                <span className="truncate">{item.name}</span>
                 {item.showBadge &&
                   !loadingAppointmentCount &&
                   appointmentCount > 0 && (
-                    <span className="ml-auto bg-cyan-500 text-white text-xs px-2.5 py-1 rounded-full font-bold shadow-md">
+                    <span className="ml-auto bg-green-500 text-white text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full font-bold shadow-md flex-shrink-0">
                       {appointmentCount}
                     </span>
                   )}
@@ -268,27 +268,27 @@ export default function SideBar() {
         </ul>
       </nav>
 
-      <div className="border-t-2 border-teal-100 my-6"></div>
+      <div className="border-t-2 border-blue-100 my-4 sm:my-5 md:my-6"></div>
 
-      <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4 tracking-wider">
+      <h2 className="text-xs font-semibold text-gray-500 uppercase mb-3 sm:mb-4 tracking-wider">
         Account
       </h2>
-      <ul className="space-y-2">
+      <ul className="space-y-1.5 sm:space-y-2">
         {!isLoggedIn ? (
           authNavItems.map((item) => (
             <li key={item.name}>
               <Link
                 to={item.path}
-                className={`flex items-center p-3.5 rounded-xl text-base font-medium transition-all duration-200 
+                className={`flex items-center p-2.5 sm:p-3 md:p-3.5 rounded-xl text-sm sm:text-base font-medium transition-all duration-200 
                   ${
                     location.pathname === item.path
-                      ? "bg-gradient-to-r from-teal-500 to-cyan-600 text-white shadow-lg"
-                      : "text-gray-700 hover:bg-teal-50 hover:text-teal-700"
+                      ? "bg-gradient-to-r from-blue-500 to-green-600 text-white shadow-lg"
+                      : "text-gray-700 hover:bg-blue-50 hover:text-blue-700"
                   }
                 `}
               >
-                <item.icon className="mr-3 text-lg" />
-                {item.name}
+                <item.icon className="mr-2 sm:mr-3 text-base sm:text-lg flex-shrink-0" />
+                <span className="truncate">{item.name}</span>
               </Link>
             </li>
           ))
@@ -296,9 +296,9 @@ export default function SideBar() {
           <li>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center p-3.5 rounded-xl text-base font-semibold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="w-full flex items-center justify-center p-2.5 sm:p-3 md:p-3.5 rounded-xl text-sm sm:text-base font-semibold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              <FaSignOutAlt className="mr-3 text-lg" />
+              <FaSignOutAlt className="mr-2 sm:mr-3 text-base sm:text-lg" />
               Logout
             </button>
           </li>

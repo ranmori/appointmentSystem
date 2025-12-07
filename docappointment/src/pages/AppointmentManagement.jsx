@@ -16,36 +16,36 @@ const CustomModal = ({
 
   return (
     <div className="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border-2 border-teal-100">
+      <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md border-2 border-blue-100">
         {message && (
           <div
-            className={`p-4 mb-5 rounded-xl border-l-4 ${
+            className={`p-3 sm:p-4 mb-4 sm:mb-5 rounded-xl border-l-4 ${
               isSuccess
                 ? "bg-green-50 text-green-700 border-green-400"
                 : "bg-red-50 text-red-700 border-red-400"
             }`}
           >
-            {message}
+            <p className="text-sm sm:text-base">{message}</p>
           </div>
         )}
         {title && (
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-4 sm:mb-6">
             {title}
           </h2>
         )}
         {children}
-        <div className="mt-6 flex justify-end space-x-3">
+        <div className="mt-4 sm:mt-6 flex justify-end space-x-2 sm:space-x-3">
           {children ? (
             <button
               onClick={onClose}
-              className="flex items-center px-5 py-2.5 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-semibold"
+              className="flex items-center px-4 sm:px-5 py-2 sm:py-2.5 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-semibold text-sm sm:text-base"
             >
               <FaTimes className="mr-2" /> Cancel
             </button>
           ) : (
             <button
               onClick={onClose}
-              className={`flex items-center px-5 py-2.5 rounded-xl transition-colors font-semibold
+              className={`flex items-center px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-colors font-semibold text-sm sm:text-base
                 ${
                   isSuccess
                     ? "bg-green-500 hover:bg-green-600 text-white"
@@ -222,10 +222,10 @@ export default function AppointmentManagement() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-teal-50 to-cyan-50">
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 px-4">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xl text-gray-600">Loading appointments...</p>
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-lg sm:text-xl text-gray-600">Loading appointments...</p>
         </div>
       </div>
     );
@@ -233,99 +233,152 @@ export default function AppointmentManagement() {
 
   if (error) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gradient-to-br from-teal-50 to-cyan-50">
-        <div className="bg-red-50 border-l-4 border-red-400 text-red-700 p-6 rounded-xl">
-          <p className="text-xl font-semibold">Error: {error}</p>
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 px-4">
+        <div className="bg-red-50 border-l-4 border-red-400 text-red-700 p-4 sm:p-6 rounded-xl max-w-md w-full">
+          <p className="text-lg sm:text-xl font-semibold">Error: {error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-8 bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 min-h-screen">
-      <div className="bg-white rounded-2xl shadow-md p-6 border border-teal-100">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent mb-6">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 bg-gradient-to-br from-blue-50 via-white to-green-50 min-h-screen">
+      <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 border border-blue-100">
+        <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent mb-4 sm:mb-6">
           Manage Appointments
         </h1>
 
         {appointments.length === 0 ? (
-          <p className="text-gray-600 text-lg text-center py-8">
+          <p className="text-gray-600 text-base sm:text-lg text-center py-8">
             No appointments found.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gradient-to-r from-teal-50 to-cyan-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-teal-700 uppercase tracking-wider">
-                    Patient
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-teal-700 uppercase tracking-wider">
-                    Doctor
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-teal-700 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-teal-700 uppercase tracking-wider">
-                    Time
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-teal-700 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-teal-700 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {appointments.map((appointment) => (
-                  <tr key={appointment._id} className="hover:bg-teal-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {appointment.patient_Id?.username || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {appointment.dr_id?.user_id?.username || "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {formatDate(appointment.date)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {appointment.time}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <span
-                        className={`px-3 py-1 rounded-full font-semibold ${
-                          appointment.status === "booked"
-                            ? "bg-green-100 text-green-700"
-                            : appointment.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {appointment.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => handleEditClick(appointment)}
-                        className="text-teal-600 hover:text-teal-800 mr-4 transition-colors"
-                        title="Edit Status"
-                      >
-                        <FaEdit className="inline-block w-5 h-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(appointment._id)}
-                        className="text-red-600 hover:text-red-800 transition-colors"
-                        title="Delete Appointment"
-                      >
-                        <FaTrashAlt className="inline-block w-5 h-5" />
-                      </button>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gradient-to-r from-blue-50 to-green-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                      Patient
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                      Doctor
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                      Time
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-blue-700 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {appointments.map((appointment) => (
+                    <tr key={appointment._id} className="hover:bg-blue-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {appointment.patient_Id?.username || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {appointment.dr_id?.user_id?.username || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {formatDate(appointment.date)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {appointment.time}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <span
+                          className={`px-3 py-1 rounded-full font-semibold ${
+                            appointment.status === "booked"
+                              ? "bg-green-100 text-green-700"
+                              : appointment.status === "pending"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {appointment.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleEditClick(appointment)}
+                          className="text-blue-600 hover:text-blue-800 mr-4 transition-colors"
+                          title="Edit Status"
+                        >
+                          <FaEdit className="inline-block w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(appointment._id)}
+                          className="text-red-600 hover:text-red-800 transition-colors"
+                          title="Delete Appointment"
+                        >
+                          <FaTrashAlt className="inline-block w-5 h-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="lg:hidden space-y-4">
+              {appointments.map((appointment) => (
+                <div
+                  key={appointment._id}
+                  className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-xl p-4 shadow-sm"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900 mb-1">
+                        Patient: {appointment.patient_Id?.username || "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-700 mb-1">
+                        Doctor: {appointment.dr_id?.user_id?.username || "N/A"}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full font-semibold text-xs ${
+                        appointment.status === "booked"
+                          ? "bg-green-100 text-green-700"
+                          : appointment.status === "pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {appointment.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm text-gray-600 mb-3">
+                    <span>{formatDate(appointment.date)}</span>
+                    <span>{appointment.time}</span>
+                  </div>
+                  <div className="flex justify-end space-x-3">
+                    <button
+                      onClick={() => handleEditClick(appointment)}
+                      className="flex items-center text-blue-600 hover:text-blue-800 transition-colors text-sm font-medium"
+                    >
+                      <FaEdit className="mr-1 w-4 h-4" /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(appointment._id)}
+                      className="flex items-center text-red-600 hover:text-red-800 transition-colors text-sm font-medium"
+                    >
+                      <FaTrashAlt className="mr-1 w-4 h-4" /> Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -343,7 +396,7 @@ export default function AppointmentManagement() {
         }
       >
         {editingAppointment && (
-          <form className="space-y-5">
+          <form className="space-y-4 sm:space-y-5">
             <div>
               <label
                 htmlFor="status"
@@ -356,7 +409,7 @@ export default function AppointmentManagement() {
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full border-2 border-gray-200 rounded-xl shadow-sm p-3 focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all"
+                className="w-full border-2 border-gray-200 rounded-xl shadow-sm p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all text-sm sm:text-base"
               >
                 <option value="pending">pending</option>
                 <option value="booked">booked</option>
@@ -364,11 +417,11 @@ export default function AppointmentManagement() {
                 <option value="completed">completed</option>
               </select>
             </div>
-            <div className="flex justify-end space-x-3 pt-4">
+            <div className="flex justify-end space-x-2 sm:space-x-3 pt-4">
               <button
                 type="button"
                 onClick={handleSave}
-                className="flex items-center px-6 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all font-semibold shadow-md"
+                className="flex items-center px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-500 to-green-600 text-white rounded-xl hover:from-blue-600 hover:to-green-700 transition-all font-semibold shadow-md text-sm sm:text-base"
               >
                 <FaCheck className="mr-2" /> Save Changes
               </button>

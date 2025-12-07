@@ -6,7 +6,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [
     tailwindcss(),
-    removeConsole({ include: ["log", "warn", "error", "info", "alert"] }),
+    removeConsole({ include: ["log", "warn", "error", "info"] }),
     react(),
   ],
 });

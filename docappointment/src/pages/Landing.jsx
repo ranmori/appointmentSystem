@@ -11,7 +11,7 @@ export default function Landing() {
   );
 
   const navigate = useNavigate();
-  const isLogged = localStorage.getItem("token");
+  const isLogged = false; // Replace with: localStorage.getItem("token");
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -82,16 +82,16 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-teal-50 via-blue-50 to-cyan-50">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Soft animated background overlay */}
       <Motion.div
         {...gradientAnimation}
         className="absolute inset-0 bg-gradient-to-r 
-          from-teal-400/30 via-blue-400/20 to-cyan-400/30 bg-[length:400%_400%] 
-          opacity-70"
+          from-blue-200/20 via-green-200/15 to-blue-200/20 bg-[length:400%_400%] 
+          opacity-60"
       />
 
-      {/* Floating Elements - softer, medical-themed colors */}
+      {/* Floating Elements */}
       <div className="absolute w-full h-full">
         {[...Array(6)].map((_, i) => (
           <Motion.div
@@ -106,23 +106,23 @@ export default function Landing() {
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
               background: i % 2 === 0 
-                ? 'radial-gradient(circle, rgba(56, 178, 172, 0.15) 0%, rgba(56, 178, 172, 0.05) 100%)'
-                : 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)',
+                ? 'radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.04) 100%)'
+                : 'radial-gradient(circle, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.04) 100%)',
             }}
           />
         ))}
       </div>
 
       {/* Hero Content */}
-      <div className="hero-content text-center relative z-10 p-4">
-        <div className="max-w-3xl mx-auto">
+      <div className="hero-content text-center relative z-10 px-4 sm:px-6 py-8 sm:py-12">
+        <div className="max-w-4xl mx-auto">
           <Motion.h1 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-4 sm:mb-6"
             style={{
-              background: 'linear-gradient(135deg, #0891b2 0%, #3b82f6 50%, #14b8a6 100%)',
+              background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #22c55e 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -135,7 +135,7 @@ export default function Landing() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="py-6 text-xl sm:text-2xl text-gray-700 leading-relaxed"
+            className="py-4 sm:py-6 text-lg sm:text-xl md:text-2xl text-gray-700 leading-relaxed px-2"
           >
             Get your appointment with the{" "}
             <Motion.span
@@ -145,7 +145,7 @@ export default function Landing() {
               animate="visible"
               className="inline-block font-bold"
               style={{
-                background: 'linear-gradient(135deg, #14b8a6 0%, #0891b2 100%)',
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text',
@@ -164,10 +164,10 @@ export default function Landing() {
             transition={{ duration: 0.5, delay: 0.4 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.98 }}
-            className="btn btn-lg px-10 py-4 text-lg font-semibold rounded-full
+            className="btn btn-lg px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-full
             shadow-xl hover:shadow-2xl transition-all duration-300
-            text-white bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-500 
-            border-none bg-[length:200%] relative overflow-hidden"
+            text-white bg-gradient-to-r from-blue-500 via-blue-600 to-green-500 
+            border-none bg-[length:200%] relative overflow-hidden w-full sm:w-auto max-w-xs mx-auto"
             onClick={handleGetStarted}
           >
             <span className="relative z-10">Get Started</span>
@@ -178,10 +178,10 @@ export default function Landing() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="mt-6 text-gray-600 text-base"
+              className="mt-4 sm:mt-6 text-gray-600 text-sm sm:text-base px-2"
             >
               Already have an account?{" "}
-              <Link to="/login" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
+              <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors">
                 Login
               </Link>
             </Motion.div>
@@ -191,10 +191,10 @@ export default function Landing() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.6 }}
-              className="mt-6 text-gray-600 text-base"
+              className="mt-4 sm:mt-6 text-gray-600 text-sm sm:text-base px-2"
             >
               Continue to{" "}
-              <Link to="/dashboard" className="font-semibold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
+              <Link to="/dashboard" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors">
                 Dashboard
               </Link>
             </Motion.div>
