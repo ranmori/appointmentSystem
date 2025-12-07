@@ -1,7 +1,5 @@
 # **Doc Meet: Appointment System Documentation**
 
-As a senior software engineer, I've prepared the official documentation for the **appointmentSystem** repository, codenamed **Doc Meet**. This guide provides a comprehensive overview, setup instructions, and deployment strategies for this full-stack medical appointment management application.
-
 -----
 
 ## 1\. Project Overview
